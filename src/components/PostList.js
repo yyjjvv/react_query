@@ -1,9 +1,11 @@
 // packages
+import { useContext } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 // customed files
 import { getPosts, getPostsByUsername, uploadPost } from "../api";
-import { FEED_VARIANT } from "../values";
+import { LoginContext } from "../context/LoginContext";
+import { FEED_VARIANT, QUERY_KEYS } from "../values";
 import styles from "./PostList.module.css";
 // components
 import Post from "./Post";
@@ -12,7 +14,9 @@ import ErrorPage from "../pages/ErrorPage";
 import PostForm from "./PostForm";
 
 function PostList({ variant = FEED_VARIANT.HOME_FEED, showPostForm }) {
+    const { currentUsername } = useContext(LoginContext);
     const queryClient = useQueryClient();
+
     let postsQueryKey;
     let postsQueryFn;
 
@@ -20,9 +24,8 @@ function PostList({ variant = FEED_VARIANT.HOME_FEED, showPostForm }) {
         postsQueryKey = ["posts"];
         postsQueryFn = getPosts;
     } else if (variant === FEED_VARIANT.MY_FEED) {
-        const username = "codeit";
-        postsQueryKey = ["posts", username];
-        postsQueryFn = () => getPostsByUsername(username);
+        postsQueryKey = [QUERY_KEYS.POSTS, currentUsername];
+        postsQueryFn = () => getPostsByUsername(currentUsername);
     } else {
         console.warn("Invalid feed request.");
     }
@@ -39,7 +42,7 @@ function PostList({ variant = FEED_VARIANT.HOME_FEED, showPostForm }) {
     const uploadPostMutation = useMutation({
         mutationFn: (newPost) => uploadPost(newPost),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["posts"] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.POSTS] });
         },
     });
 
