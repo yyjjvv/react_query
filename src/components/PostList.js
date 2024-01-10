@@ -1,15 +1,18 @@
 // packages
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 // customed files
-import { getPosts, getPostsByUsername } from "../api";
+import { getPosts, getPostsByUsername, uploadPost } from "../api";
 import { FEED_VARIANT } from "../values";
 import styles from "./PostList.module.css";
 // components
 import Post from "./Post";
 import LoadingPage from "../pages/LoadingPage";
 import ErrorPage from "../pages/ErrorPage";
+import PostForm from "./PostForm";
 
-function PostList({ variant = FEED_VARIANT.HOME_FEED }) {
+function PostList({ variant = FEED_VARIANT.HOME_FEED, showPostForm }) {
+    const queryClient = useQueryClient();
     let postsQueryKey;
     let postsQueryFn;
 
@@ -33,6 +36,21 @@ function PostList({ variant = FEED_VARIANT.HOME_FEED }) {
         queryFn: postsQueryFn,
     });
 
+    const uploadPostMutation = useMutation({
+        mutationFn: (newPost) => uploadPost(newPost),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["posts"] });
+        },
+    });
+
+    const handleUploadPost = (newPost) => {
+        uploadPostMutation.mutate(newPost, {
+            onSuccess: () => {
+                toast("포스트가 성공적으로 업로드 되었습니다!");
+            },
+        });
+    };
+
     if (isPending) return <LoadingPage />;
 
     if (isError) return <ErrorPage />;
@@ -41,6 +59,14 @@ function PostList({ variant = FEED_VARIANT.HOME_FEED }) {
 
     return (
         <div className={styles.postList}>
+            {showPostForm ? (
+                <PostForm
+                    onSubmit={handleUploadPost}
+                    buttonDisabled={uploadPostMutation.isPending}
+                />
+            ) : (
+                ""
+            )}
             {posts.map((post) => (
                 <Post key={post.id} post={post} />
             ))}

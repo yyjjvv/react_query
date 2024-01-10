@@ -1,7 +1,8 @@
-import Container from '../components/Container';
-import PostList from '../components/PostList';
 import { FEED_VARIANT } from '../values';
 import styles from './HomePage.module.css';
+
+import Container from '../components/Container';
+import PostList from '../components/PostList';
 
 function HomePage() {
   return (
